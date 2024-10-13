@@ -1,0 +1,161 @@
+enum DeploymentStatus {
+  ACTIVE # Active deployment
+  FAILED # Failed deployment
+  SYNCING # Deployment is syncing
+  PENDING # Pending deployment
+}
+
+enum TransactionType {
+  TOKENS_ADDED # Tokens added to the billing balance
+  TOKENS_REMOVED # Tokens removed from the billing balance
+  TOKENS_PULLED # Tokens pulled from the balance
+  INSUFFICIENT_BALANCE # Insufficient balance
+  TOKENS_RESQUED # Tokens rescued
+}
+
+# Represents the Subgraph entity encompassing related deployments and versions.
+type Subgraph @entity {
+  "Unique identifier for the subgraph (IPFS hash or Subgraph ID)"
+  id: String!
+
+  "Name of the subgraph"
+  name: String!
+
+  "Description of the subgraph"
+  description: String
+
+  "Address of the creator of the subgraph"
+  creator: Bytes!
+
+  "Timestamp of when the subgraph was created"
+  createdAt: BigInt!
+
+  "Timestamp of when the subgraph was last updated"
+  updatedAt: BigInt!
+
+  "URI for additional metadata related to the subgraph"
+  metadataURI: String
+
+  "List of versions of the subgraph"
+  versions: [Version!]! @derivedFrom(field: "subgraph")
+
+  "List of deployments for this subgraph"
+  deployments: [Deployment!]! @derivedFrom(field: "subgraph")
+
+  "Associated billing balance"
+  billingBalance: BillingBalance @derivedFrom(field: "subgraph")
+}
+
+# Represents deployments of subgraphs, tracking the contracts they index.
+type Deployment @entity {
+  "Unique identifier for the deployment"
+  id: String!
+
+  "Reference to the parent subgraph"
+  subgraph: Subgraph!
+
+  "Reference to the subgraph version associated with the deployment"
+  version: Version!
+
+  "IPFS hash where the deployment manifest is stored"
+  deploymentIPFSHash: String!
+
+  "The last block indexed by the deployment"
+  indexedBlock: BigInt!
+
+  "Status of the deployment (e.g., active, failed, syncing)"
+  status: DeploymentStatus!
+
+  "Timestamp when the deployment was created"
+  createdAt: BigInt!
+
+  "Timestamp of when the deployment was last updated"
+  updatedAt: BigInt!
+
+  "URI for additional deployment-related metadata"
+  metadataURI: String
+}
+
+# Represents different versions of a subgraph.
+type Version @entity {
+  "Unique identifier for the version"
+  id: String!
+
+  "Reference to the subgraph this version belongs to"
+  subgraph: Subgraph!
+
+  "List of deployments linked to this version"
+  deployments: [Deployment!]! @derivedFrom(field: "version")
+
+  "Human-readable label for the version (e.g., v1.0, v2.0)"
+  versionLabel: String
+
+  "IPFS hash storing the manifest for this version"
+  ipfsHash: String!
+
+  "Timestamp when the version was created"
+  createdAt: BigInt!
+
+  "Timestamp of when the version was last updated"
+  updatedAt: BigInt!
+
+  "URI for additional version-related metadata"
+  metadataURI: String
+}
+
+# Represents billing balances associated with each subgraph.
+type BillingBalance @entity {
+  "Unique identifier for the billing balance (e.g., IPFS hash)"
+  id: String!
+
+  "Reference to the associated subgraph"
+  subgraph: Subgraph!
+
+  "ID of the subgraph"
+  subgraphID: BigInt!
+
+  "_l1SubgraphId of the L1 subgraph"
+  _l1SubgraphId: BigInt!
+
+  "_l2SubgraphID of the L2 subgraph"
+  _l2SubgraphID: BigInt!
+
+  "Current billing balance"
+  balance: BigInt!
+
+  "Timestamp when the balance was last updated"
+  lastUpdated: BigInt!
+
+  "List of transactions associated with this balance"
+  transactions: [BillingTransaction!]! @derivedFrom(field: "billingBalance")
+
+  "URI for additional billing balance-related metadata"
+  metadataURI: String
+}
+
+# Represents individual billing transactions for a subgraph.
+type BillingTransaction @entity {
+  "Unique identifier for the transaction"
+  id: String!
+
+  "Reference to the associated billing balance"
+  billingBalance: BillingBalance!
+
+  "Type of transaction (e.g., TOKENS_ADDED, TOKENS_REMOVED, etc.)"
+  transactionType: TransactionType!
+
+  "Address of the user involved in the transaction"
+  user: Bytes!
+
+  "Amount for the transaction"
+  amount: BigInt!
+
+  "Timestamp of when the transaction occurred"
+  timestamp: BigInt!
+
+  "Additional details regarding the transaction (if any)"
+  details: String
+
+  "URI for additional transaction-related metadata"
+  metadataURI: String
+}
